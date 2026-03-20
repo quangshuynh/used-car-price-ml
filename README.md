@@ -16,7 +16,7 @@ Used car prices vary widely depending on many vehicle characteristics. This proj
 ## Dataset
 - **Dataset Name:** Car Price DataSet
 - **Source:** Kaggle
-- **Link:** https://www.kaggle.com/datasets/mirzahasnine/car-price-dataset
+- **Link:** https://www.gigasheet.com/sample-data/used-car-price-prediction-dataset
 - **File Name:** `car_prices.csv`
 
 ## Project Goals
