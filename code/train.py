@@ -166,12 +166,12 @@ def main():
     X, y, preprocessor = clean_and_prepare_data(file_path)
 
     # Split into training and validation sets
-    # Using 20% test size, and random state = 35 adapted from Assignment 4
+    # Using 20% validation size, and random_state = 35 adapted from Assignment 4
     X_train, X_val, y_train, y_val = train_test_split(
         X,
         y,
-        test_size = 0.2,
-        random_state = 35
+        test_size=0.2,
+        random_state=35
     )
 
     # IMPORTANT: fit on train only, transform val only
@@ -179,8 +179,6 @@ def main():
     X_val_processed = preprocessor.transform(X_val)
 
     # Store all results here
-    # Used to just print result out here
-    # TODO: move to evaluate.py later, use this version for check in for now
     all_results = []
 
     # 1. Linear Regression
@@ -220,7 +218,22 @@ def main():
     _, (mse, rmse, mae, r2) = mlp_regressor(
         X_train_processed, y_train, X_val_processed, y_val
     )
-    # Round values for readability
+    all_results.append({
+        "Model": "MLP Regressor",
+        "Configuration": "hidden_layer_sizes = (32, 16), activation = relu",
+        "MSE": mse,
+        "RMSE": rmse,
+        "MAE": mae,
+        "R2": r2
+    })
+
+    # Create results table AFTER all models are added
+    results_df = pd.DataFrame(all_results)
+
+    # Sort by RMSE (lower is better)
+    results_df = results_df.sort_values(by="RMSE", ascending=True).reset_index(drop=True)
+
+    # Make a cleaner display copy
     results_df_display = results_df.copy()
     results_df_display["MSE"] = results_df_display["MSE"].round(2)
     results_df_display["RMSE"] = results_df_display["RMSE"].round(2)
@@ -228,7 +241,6 @@ def main():
     results_df_display["R2"] = results_df_display["R2"].round(4)
 
     print("\n=== Model Comparison (Validation Set) ===\n")
-
     print(results_df_display.to_string(
         index=False,
         col_space=18,
@@ -238,7 +250,6 @@ def main():
     print("\n=== Best Model ===\n")
     best_row = results_df_display.iloc[0]
     print(best_row.to_string())
-
 
 if __name__ == "__main__":
     main()
