@@ -251,6 +251,8 @@ def main():
     print("\n=== Best Model ===\nNOTE: NOT TRAINED ON FULL DATA SET YET\n")
     best_row = results_df_display.iloc[0]
     print(best_row.to_string())
+    # TODO: delete after: used to just see the price spread from preprocessed data
+    print(y.describe())
 
 if __name__ == "__main__":
     main()
