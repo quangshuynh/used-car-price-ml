@@ -235,6 +235,7 @@ def main():
 
     # Make a cleaner display copy
     results_df_display = results_df.copy()
+    # Round numbers off for better display
     results_df_display["MSE"] = results_df_display["MSE"].round(2)
     results_df_display["RMSE"] = results_df_display["RMSE"].round(2)
     results_df_display["MAE"] = results_df_display["MAE"].round(2)
@@ -247,7 +248,7 @@ def main():
         justify="center"
     ))
 
-    print("\n=== Best Model ===\n")
+    print("\n=== Best Model ===\nNOTE: NOT TRAINED ON FULL DATA SET YET\n")
     best_row = results_df_display.iloc[0]
     print(best_row.to_string())
 
