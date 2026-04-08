@@ -27,7 +27,7 @@ from sklearn.neural_network import MLPRegressor
 
 from preprocessing import clean_and_prepare_data
 
-# Move to evaluate.py later, use this version for check in for now
+# TODO: Move to evaluate.py later, use this version for check in for now
 def evaluate_model(y_true, y_pred):
     mse = mean_squared_error(y_true, y_pred)
     rmse = np.sqrt(mse)
@@ -35,7 +35,7 @@ def evaluate_model(y_true, y_pred):
     r2 = r2_score(y_true, y_pred)
     return mse, rmse, mae, r2
 
-# move to evaluate.py later use this version for check in for now
+# TODO: Move to evaluate.py later, use this version for check in for now
 def linear_regression(X_train, y_train, X_val, y_val):
     model = LinearRegression()
     model.fit(X_train, y_train)
@@ -162,7 +162,7 @@ def main():
         "Used Car Price Prediction Dataset export 2026-03-20 19-46-48.csv"
     )
 
-    # Quang's function returns preprocessed data
+    # Quang's function used to pull preprocessed data
     X, y, preprocessor = clean_and_prepare_data(file_path)
 
     # Split into training and validation sets
@@ -220,26 +220,23 @@ def main():
     _, (mse, rmse, mae, r2) = mlp_regressor(
         X_train_processed, y_train, X_val_processed, y_val
     )
-    all_results.append({
-        "Model": "MLP Regressor",
-        "Configuration": "hidden_layer_sizes = (32, 16), activation = relu",
-        "MSE": mse,
-        "RMSE": rmse,
-        "MAE": mae,
-        "R2": r2
-    })
+    # Round values for readability
+    results_df_display = results_df.copy()
+    results_df_display["MSE"] = results_df_display["MSE"].round(2)
+    results_df_display["RMSE"] = results_df_display["RMSE"].round(2)
+    results_df_display["MAE"] = results_df_display["MAE"].round(2)
+    results_df_display["R2"] = results_df_display["R2"].round(4)
 
-    # Create results table
-    results_df = pd.DataFrame(all_results)
+    print("\n=== Model Comparison (Validation Set) ===\n")
 
-    # Lower RMSE is better for regression
-    results_df = results_df.sort_values(by="RMSE", ascending=True).reset_index(drop=True)
+    print(results_df_display.to_string(
+        index=False,
+        col_space=18,
+        justify="center"
+    ))
 
-    print("\nModel Comparison Table (Regression)")
-    print(results_df.to_string(index=False))
-
-    print("\nBest model based on validation RMSE:")
-    best_row = results_df.iloc[0]
+    print("\n=== Best Model ===\n")
+    best_row = results_df_display.iloc[0]
     print(best_row.to_string())
 
 
