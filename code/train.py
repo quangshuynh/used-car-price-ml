@@ -7,22 +7,14 @@ on the used car dataset
 
 Author: Kai Fan kf5601
 """
-# todo:
-# - Linear Regression
-# - KNN Regressor
-# - Decision Tree Regressor
-# - Random Forest Regressor
-# - Neural Network (MLPRegressor) with hidden layers (32, 16)
-# - Support Vector Regressor (SVR)
-#
-# IMPORTANT: Use this from Quang's code
-#     preprocessor.fit_transform(X_train)
-#     preprocessor.transform(X_val)
+# TODO: A lot of stuff needs to be moved to evaluate.py, use this version for check in for now
 
 # Import necessary libraries
-import pandas as pd
 import os
+import numpy as np
+import pandas as pd
 
+from sklearn.base import clone
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
@@ -35,72 +27,221 @@ from sklearn.neural_network import MLPRegressor
 
 from preprocessing import clean_and_prepare_data
 
+# Move to evaluate.py later, use this version for check in for now
+def evaluate_model(y_true, y_pred):
+    mse = mean_squared_error(y_true, y_pred)
+    rmse = np.sqrt(mse)
+    mae = mean_absolute_error(y_true, y_pred)
+    r2 = r2_score(y_true, y_pred)
+    return mse, rmse, mae, r2
 
-def linear_Regression(X_train, y_train, X_val, y_val):
+# move to evaluate.py later use this version for check in for now
+def linear_regression(X_train, y_train, X_val, y_val):
     model = LinearRegression()
     model.fit(X_train, y_train)
     y_pred = model.predict(X_val)
-    return evaluate_model(y_val, y_pred)
+    return model, evaluate_model(y_val, y_pred)
 
-def knn_Regressor(X_train, y_train, X_val, y_val):
-    model = KNeighborsRegressor()
+# Adapted based on Assignment 4, except eval metrics are now: 
+# MSE, RMSE, MAE, R2 instead of accuracy and F1 score
+def knn_regressor(X_train, y_train, X_val, y_val):
+    results = []
+
+    for k in [3, 5, 7, 9]:
+        model = KNeighborsRegressor(n_neighbors=k)
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_val)
+        mse, rmse, mae, r2 = evaluate_model(y_val, y_pred)
+
+        results.append({
+            "Model": "KNN Regressor",
+            "Configuration": f"k = {k}",
+            "MSE": mse,
+            "RMSE": rmse,
+            "MAE": mae,
+            "R2": r2
+        })
+
+    return results
+
+# adapted based on Assignment 4, except eval metrics are now:
+# MSE, RMSE, MAE, R2 instead of accuracy and F1 score
+def decision_tree_regressor(X_train, y_train, X_val, y_val):
+    results = []
+
+    for depth in [None, 3, 5, 7]:
+        model = DecisionTreeRegressor(max_depth=depth, random_state=35)
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_val)
+        mse, rmse, mae, r2 = evaluate_model(y_val, y_pred)
+
+        results.append({
+            "Model": "Decision Tree Regressor",
+            "Configuration": f"max_depth = {depth}",
+            "MSE": mse,
+            "RMSE": rmse,
+            "MAE": mae,
+            "R2": r2
+        })
+
+    return results
+
+# adapted based on Assignment 4, except eval metrics are now:
+# MSE, RMSE, MAE, R2 instead of accuracy and F1 score
+def random_forest_regressor(X_train, y_train, X_val, y_val):
+    results = []
+
+    for n in [50, 100]:
+        for depth in [None, 5, 10]:
+            model = RandomForestRegressor(
+                n_estimators=n,
+                max_depth=depth,
+                random_state=35,
+                n_jobs=-1
+            )
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_val)
+            mse, rmse, mae, r2 = evaluate_model(y_val, y_pred)
+
+            results.append({
+                "Model": "Random Forest Regressor",
+                "Configuration": f"n_estimators = {n}, max_depth = {depth}",
+                "MSE": mse,
+                "RMSE": rmse,
+                "MAE": mae,
+                "R2": r2
+            })
+
+    return results
+
+# adapted based on Assignment 4, except eval metrics are now:
+# MSE, RMSE, MAE, R2 instead of accuracy and F1 score
+def svr_regressor(X_train, y_train, X_val, y_val):
+    results = []
+
+    for kernel_type in ["linear", "rbf"]:
+        for c_value in [0.1, 1, 10]:
+            model = SVR(kernel=kernel_type, C=c_value)
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_val)
+            mse, rmse, mae, r2 = evaluate_model(y_val, y_pred)
+
+            results.append({
+                "Model": "SVR",
+                "Configuration": f"kernel = {kernel_type}, C = {c_value}",
+                "MSE": mse,
+                "RMSE": rmse,
+                "MAE": mae,
+                "R2": r2
+            })
+
+    return results
+
+# adapted based on Assignment 4, except eval metrics are now:
+# MSE, RMSE, MAE, R2 instead of accuracy and F1 score
+def mlp_regressor(X_train, y_train, X_val, y_val):
+    model = MLPRegressor(
+        hidden_layer_sizes=(32, 16),
+        activation="relu",
+        max_iter=1000,
+        random_state=35
+    )
     model.fit(X_train, y_train)
     y_pred = model.predict(X_val)
-    return evaluate_model(y_val, y_pred)
+    return model, evaluate_model(y_val, y_pred)
 
-def decision_Tree_Regressor(X_train, y_train, X_val, y_val):
-    model = DecisionTreeRegressor()
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_val)
-    return evaluate_model(y_val, y_pred)
-
-def random_Forest_Regressor(X_train, y_train, X_val, y_val):
-    model = RandomForestRegressor()
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_val)
-    return evaluate_model(y_val, y_pred)
-
-def svr(X_train, y_train, X_val, y_val):
-    model = SVR()
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_val)
-    return evaluate_model(y_val, y_pred)
-
-def mlp_Regressor(X_train, y_train, X_val, y_val):
-    model = MLPRegressor(hidden_layer_sizes=(32, 16), max_iter=500)
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_val)
-    return evaluate_model(y_val, y_pred)
-
-def evaluate_model(y_true, y_pred):
-    mse = mean_squared_error(y_true, y_pred)
-    mae = mean_absolute_error(y_true, y_pred)
-    r2 = r2_score(y_true, y_pred)
-    return mse, mae, r2
 
 def main():
     # Load and preprocess the data
     current_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(current_dir)
-    file_path = os.path.join(parent_dir + "\\data\\raw", "Used Car Price Prediction Dataset export 2026-03-20 19-46-48.csv")
-    
-    df = pd.read_csv(file_path)
-    X, y, preprocessor = clean_and_prepare_data(df)
+    file_path = os.path.join(
+        parent_dir,
+        "data",
+        "raw",
+        "Used Car Price Prediction Dataset export 2026-03-20 19-46-48.csv"
+    )
 
-    # Split the data into training and validation sets
-    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+    # Quang's function returns preprocessed data
+    X, y, preprocessor = clean_and_prepare_data(file_path)
 
-    # Train and evaluate each model
-    models = {
-        "Linear Regression": linear_Regression,
-        "KNN Regressor": knn_Regressor,
-        "Decision Tree Regressor": decision_Tree_Regressor,
-        "Random Forest Regressor": random_Forest_Regressor,
-        "Support Vector Regressor": svr,
-        "MLP Regressor": mlp_Regressor
-    }
-    
+    # Split into training and validation sets
+    # Using 20% test size, and random state = 35 adapted from Assignment 4
+    X_train, X_val, y_train, y_val = train_test_split(
+        X,
+        y,
+        test_size = 0.2,
+        random_state = 35
+    )
 
-    for name, func in models.items():
-        mse, mae, r2 = func(X_train, y_train, X_val, y_val)
-        print(f"{name} - MSE: {mse:.2f}, MAE: {mae:.2f}, R2: {r2:.2f}")
+    # IMPORTANT: fit on train only, transform val only
+    X_train_processed = preprocessor.fit_transform(X_train)
+    X_val_processed = preprocessor.transform(X_val)
+
+    # Store all results here
+    # Used to just print result out here
+    # TODO: move to evaluate.py later, use this version for check in for now
+    all_results = []
+
+    # 1. Linear Regression
+    _, (mse, rmse, mae, r2) = linear_regression(
+        X_train_processed, y_train, X_val_processed, y_val
+    )
+    all_results.append({
+        "Model": "Linear Regression",
+        "Configuration": "default",
+        "MSE": mse,
+        "RMSE": rmse,
+        "MAE": mae,
+        "R2": r2
+    })
+
+    # 2. KNN Regressor
+    all_results.extend(
+        knn_regressor(X_train_processed, y_train, X_val_processed, y_val)
+    )
+
+    # 3. Decision Tree Regressor
+    all_results.extend(
+        decision_tree_regressor(X_train_processed, y_train, X_val_processed, y_val)
+    )
+
+    # 4. Random Forest Regressor
+    all_results.extend(
+        random_forest_regressor(X_train_processed, y_train, X_val_processed, y_val)
+    )
+
+    # 5. SVR
+    all_results.extend(
+        svr_regressor(X_train_processed, y_train, X_val_processed, y_val)
+    )
+
+    # 6. MLP Regressor
+    _, (mse, rmse, mae, r2) = mlp_regressor(
+        X_train_processed, y_train, X_val_processed, y_val
+    )
+    all_results.append({
+        "Model": "MLP Regressor",
+        "Configuration": "hidden_layer_sizes = (32, 16), activation = relu",
+        "MSE": mse,
+        "RMSE": rmse,
+        "MAE": mae,
+        "R2": r2
+    })
+
+    # Create results table
+    results_df = pd.DataFrame(all_results)
+
+    # Lower RMSE is better for regression
+    results_df = results_df.sort_values(by="RMSE", ascending=True).reset_index(drop=True)
+
+    print("\nModel Comparison Table (Regression)")
+    print(results_df.to_string(index=False))
+
+    print("\nBest model based on validation RMSE:")
+    best_row = results_df.iloc[0]
+    print(best_row.to_string())
+
+
+if __name__ == "__main__":
+    main()
