@@ -35,7 +35,6 @@ def evaluate_model(y_true, y_pred):
     r2 = r2_score(y_true, y_pred)
     return mse, rmse, mae, r2
 
-# TODO: Move to evaluate.py later, use this version for check in for now
 def linear_regression(X_train, y_train, X_val, y_val):
     model = LinearRegression()
     model.fit(X_train, y_train)
