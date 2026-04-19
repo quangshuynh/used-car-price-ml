@@ -8,8 +8,9 @@ Author: Quang Huynh
 
 import re
 from typing import List, Tuple
-
+import numpy as np
 import pandas as pd
+from pyparsing import col
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
@@ -133,7 +134,8 @@ def normalize_text_columns(df: pd.DataFrame, text_columns: List[str]) -> pd.Data
     df = df.copy()
     for col in text_columns:
         if col in df.columns:
-            df[col] = df[col].astype("string").str.strip().str.lower()
+            df[col] = df[col].astype(str).str.strip().str.lower()
+            df[col] = df[col].replace("nan", np.nan)
     return df
 
 
@@ -152,22 +154,35 @@ def drop_rows_with_missing_target(df: pd.DataFrame, target_column: str = "price"
 
 def remove_price_outliers(df: pd.DataFrame, column: str = "price") -> pd.DataFrame:
     """
-    Remove outliers in the price column using the IQR method
+    Remove outliers in the price column using the IQR method, then apply
+    a log transform to reduce right skew in car prices
 
     :param df: Input DataFrame
-    :param column: Target column name (default = price)
-    :returns: DataFrame with outliers removed
+    :param column: Target column name, default is price
+    :returns: DataFrame with outliers removed and price log transformed
     """
     df = df.copy()
 
-    Q1 = df[column].quantile(0.25)
-    Q3 = df[column].quantile(0.75)
-    IQR = Q3 - Q1
+    if column not in df.columns:
+        return df
 
-    lower_bound = Q1 - 1.5 * IQR
-    upper_bound = Q3 + 1.5 * IQR
+    # make sure target is numeric and rows with missing target are removed first
+    df[column] = pd.to_numeric(df[column], errors="coerce")
+    df = df.dropna(subset=[column])
 
-    df = df[(df[column] >= lower_bound) & (df[column] <= upper_bound)]
+    # calculate IQR bounds
+    q1 = df[column].quantile(0.25)
+    q3 = df[column].quantile(0.75)
+    iqr = q3 - q1
+
+    lower_bound = q1 - 1.5 * iqr
+    upper_bound = q3 + 1.5 * iqr
+
+    # keep only rows inside bounds
+    df = df[(df[column] >= lower_bound) & (df[column] <= upper_bound)].copy()
+
+    # optional but recommended for regression on price
+    df[column] = np.log1p(df[column])
 
     return df
 
@@ -176,8 +191,8 @@ def basic_clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Perform the core cleaning steps for the used car dataset, including
     standardizing columns, removing duplicates, cleaning numeric text fields,
-    normalizing text columns, engineering engine size, and dropping rows with
-    missing target values
+    normalizing text columns, engineering engine size, removing price outliers,
+    and dropping rows with missing target values
 
     :param df: Raw input DataFrame
     :returns: Cleaned DataFrame ready for train test split and preprocessing pipeline
@@ -186,6 +201,7 @@ def basic_clean_data(df: pd.DataFrame) -> pd.DataFrame:
     df = remove_duplicates(df)
     df = clean_price_column(df)
     df = clean_milage_column(df)
+    df = drop_rows_with_missing_target(df, "price")
     df = remove_price_outliers(df, "price")
 
     text_columns = [
@@ -201,7 +217,7 @@ def basic_clean_data(df: pd.DataFrame) -> pd.DataFrame:
     ]
     df = normalize_text_columns(df, text_columns)
     df = add_engine_size_feature(df)
-    df = drop_rows_with_missing_target(df, "price")
+
     return df
 
 
@@ -226,7 +242,7 @@ def get_feature_lists(X: pd.DataFrame) -> Tuple[List[str], List[str]]:
     :returns: Tuple containing numeric column list and categorical column list
     """
     numeric_cols = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
-    categorical_cols = X.select_dtypes(include=["object", "category"]).columns.tolist()
+    categorical_cols = X.select_dtypes(include=["object", "category", "string"]).columns.tolist()
     return numeric_cols, categorical_cols
 
 
