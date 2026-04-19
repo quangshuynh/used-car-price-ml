@@ -3,7 +3,7 @@ preprocessing.py
 
 Preprocessing functions for the used car price prediction dataset.
 
-Author: Quang Huynh
+Author: Quang Huynh (qth9368)
 """
 
 import re
@@ -19,7 +19,6 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 def load_data(file_path: str) -> pd.DataFrame:
     """
-    description
     Load the dataset from a CSV file into a pandas DataFrame
 
     :param file_path: Path to the CSV dataset file
@@ -30,7 +29,6 @@ def load_data(file_path: str) -> pd.DataFrame:
 
 def standardize_column_names(df: pd.DataFrame) -> pd.DataFrame:
     """
-    description
     Clean and standardize column names by stripping whitespace, converting
     names to lowercase, and replacing spaces with underscores
 
