@@ -390,17 +390,19 @@ def main():
     # Make a cleaner display copy
     results_df_display = format_results_dataframe(results_df)
 
-    #  best model
-    print("\n=== Best Model ===\nNOTE: NOT TRAINED ON FULL DATA SET YET\n")
-    best_row = results_df_display.iloc[0]
-    print(best_row.to_string())
-
+    # model comparison table
     print("\n=== Model Comparison (Validation Set) ===\n")
     print(results_df_display.to_string(
         index=False,
         col_space=18,
         justify="center"
     ))
+
+    #  best model
+    print("\n=== Best Model ===\nNOTE: NOT TRAINED ON FULL DATA SET YET\n")
+    best_row = results_df_display.iloc[0]
+    print(best_row.to_string())
+
 
     # TODO: delete after: used to just see the price spread from preprocessed data
     print("\n=== Price Distribution (Log Scale) ===\n")
