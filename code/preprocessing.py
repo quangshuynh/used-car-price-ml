@@ -133,8 +133,7 @@ def normalize_text_columns(df: pd.DataFrame, text_columns: List[str]) -> pd.Data
     df = df.copy()
     for col in text_columns:
         if col in df.columns:
-            df[col] = df[col].astype(str).str.strip().str.lower()
-            df[col] = df[col].replace("nan", pd.NA)
+            df[col] = df[col].astype("string").str.strip().str.lower()
     return df
 
 
@@ -151,6 +150,27 @@ def drop_rows_with_missing_target(df: pd.DataFrame, target_column: str = "price"
         return df.copy()
     return df.dropna(subset=[target_column]).copy()
 
+def remove_price_outliers(df: pd.DataFrame, column: str = "price") -> pd.DataFrame:
+    """
+    Remove outliers in the price column using the IQR method
+
+    :param df: Input DataFrame
+    :param column: Target column name (default = price)
+    :returns: DataFrame with outliers removed
+    """
+    df = df.copy()
+
+    Q1 = df[column].quantile(0.25)
+    Q3 = df[column].quantile(0.75)
+    IQR = Q3 - Q1
+
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+
+    df = df[(df[column] >= lower_bound) & (df[column] <= upper_bound)]
+
+    return df
+
 
 def basic_clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -166,6 +186,7 @@ def basic_clean_data(df: pd.DataFrame) -> pd.DataFrame:
     df = remove_duplicates(df)
     df = clean_price_column(df)
     df = clean_milage_column(df)
+    df = remove_price_outliers(df, "price")
 
     text_columns = [
         "brand",
@@ -254,6 +275,7 @@ def clean_and_prepare_data(file_path: str) -> Tuple[pd.DataFrame, pd.Series, Col
     X, y = split_features_target(df)
     preprocessor = build_preprocessor(X)
     return X, y, preprocessor
+
 
 # main guard
 if __name__ == "__main__":
