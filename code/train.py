@@ -219,6 +219,46 @@ def mlp_regressor(X_train, y_train, X_val, y_val, log_transformed: bool = True):
     y_pred = model.predict(X_val)
     return model, evaluate_model(y_val, y_pred, log_transformed=log_transformed)
 
+def train_and_store_result(
+    model,
+    model_name: str,
+    configuration: str,
+    X_train,
+    y_train,
+    X_val,
+    y_val,
+    all_results,
+    log_transformed: bool = True
+):
+    """
+    Fit a model, generate predictions on the validation set, and store
+    evaluation results in the shared results list
+
+    :param model: Sklearn regression model instance
+    :param model_name: Name of the model
+    :param configuration: Description of model hyperparameters
+    :param X_train: Preprocessed training features
+    :param y_train: Training target values
+    :param X_val: Preprocessed validation features
+    :param y_val: Validation target values
+    :param all_results: Shared list storing all result dictionaries
+    :param log_transformed: Whether the target was log transformed
+    :returns: Trained model
+    """
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_val)
+
+    evaluate_and_store(
+        all_results,
+        model_name,
+        configuration,
+        y_val,
+        y_pred,
+        log_transformed=log_transformed
+    )
+
+    return model
+
 
 def main():
     """
@@ -257,112 +297,103 @@ def main():
     all_results = []
 
     # 1. Linear Regression
-    model = LinearRegression()
-    model.fit(X_train_processed, y_train)
-    y_pred = model.predict(X_val_processed)
-    evaluate_and_store(
-        all_results,
+    train_and_store_result(
+        LinearRegression(),
         "Linear Regression",
         "default",
+        X_train_processed,
+        y_train,
+        X_val_processed,
         y_val,
-        y_pred,
-        log_transformed=True
+        all_results
     )
 
     # 2. KNN Regressor
     for k in [3, 5, 7, 9]:
-        model = KNeighborsRegressor(n_neighbors=k)
-        model.fit(X_train_processed, y_train)
-        y_pred = model.predict(X_val_processed)
-        evaluate_and_store(
-            all_results,
+        train_and_store_result(
+            KNeighborsRegressor(n_neighbors=k),
             "KNN Regressor",
             f"k = {k}",
+            X_train_processed,
+            y_train,
+            X_val_processed,
             y_val,
-            y_pred,
-            log_transformed=True
+            all_results
         )
 
     # 3. Decision Tree Regressor
     for depth in [None, 3, 5, 7]:
-        model = DecisionTreeRegressor(max_depth=depth, random_state=35)
-        model.fit(X_train_processed, y_train)
-        y_pred = model.predict(X_val_processed)
-        evaluate_and_store(
-            all_results,
+        train_and_store_result(
+            DecisionTreeRegressor(max_depth=depth, random_state=35),
             "Decision Tree Regressor",
             f"max_depth = {depth}",
+            X_train_processed,
+            y_train,
+            X_val_processed,
             y_val,
-            y_pred,
-            log_transformed=True
+            all_results
         )
 
     # 4. Random Forest Regressor
     for n in [50, 100]:
         for depth in [None, 5, 10]:
-            model = RandomForestRegressor(
-                n_estimators=n,
-                max_depth=depth,
-                random_state=35,
-                n_jobs=-1
-            )
-            model.fit(X_train_processed, y_train)
-            y_pred = model.predict(X_val_processed)
-            evaluate_and_store(
-                all_results,
+            train_and_store_result(
+                RandomForestRegressor(
+                    n_estimators=n,
+                    max_depth=depth,
+                    random_state=35,
+                    n_jobs=-1
+                ),
                 "Random Forest Regressor",
                 f"n_estimators = {n}, max_depth = {depth}",
+                X_train_processed,
+                y_train,
+                X_val_processed,
                 y_val,
-                y_pred,
-                log_transformed=True
+                all_results
             )
 
     # 5. SVR
     for kernel_type in ["linear", "rbf"]:
         for c_value in [0.1, 1, 10]:
-            model = SVR(kernel=kernel_type, C=c_value)
-            model.fit(X_train_processed, y_train)
-            y_pred = model.predict(X_val_processed)
-            evaluate_and_store(
-                all_results,
+            train_and_store_result(
+                SVR(kernel=kernel_type, C=c_value),
                 "SVR",
                 f"kernel = {kernel_type}, C = {c_value}",
+                X_train_processed,
+                y_train,
+                X_val_processed,
                 y_val,
-                y_pred,
-                log_transformed=True
+                all_results
             )
 
     # 6. MLP Regressor
-    model = MLPRegressor(
-        hidden_layer_sizes=(32, 16),
-        activation="relu",
-        max_iter=1000,
-        random_state=35
-    )
-    model.fit(X_train_processed, y_train)
-    y_pred = model.predict(X_val_processed)
-    evaluate_and_store(
-        all_results,
+    train_and_store_result(
+        MLPRegressor(
+            hidden_layer_sizes=(32, 16),
+            activation="relu",
+            max_iter=1000,
+            random_state=35
+        ),
         "MLP Regressor",
         "hidden_layer_sizes = (32, 16), activation = relu",
+        X_train_processed,
+        y_train,
+        X_val_processed,
         y_val,
-        y_pred,
-        log_transformed=True
+        all_results
     )
 
     # Create results table AFTER all models are added
-    results_df = pd.DataFrame(all_results)
-
-    # Sort by RMSE (lower is better)
-    results_df = results_df.sort_values(by="RMSE", ascending=True).reset_index(drop=True)
+    results_df = build_results_dataframe(all_results)
 
     # Make a cleaner display copy
-    results_df_display = results_df.copy()
-    # Round numbers off for better display
-    results_df_display["MSE"] = results_df_display["MSE"].round(2)
-    results_df_display["RMSE"] = results_df_display["RMSE"].round(2)
-    results_df_display["MAE"] = results_df_display["MAE"].round(2)
-    results_df_display["R2"] = results_df_display["R2"].round(4)
+    results_df_display = format_results_dataframe(results_df)
+
+    #  best model
+    print("\n=== Best Model ===\nNOTE: NOT TRAINED ON FULL DATA SET YET\n")
+    best_row = results_df_display.iloc[0]
+    print(best_row.to_string())
 
     print("\n=== Model Comparison (Validation Set) ===\n")
     print(results_df_display.to_string(
@@ -370,10 +401,6 @@ def main():
         col_space=18,
         justify="center"
     ))
-
-    print("\n=== Best Model ===\nNOTE: NOT TRAINED ON FULL DATA SET YET\n")
-    best_row = results_df_display.iloc[0]
-    print(best_row.to_string())
 
     # TODO: delete after: used to just see the price spread from preprocessed data
     print("\n=== Price Distribution (Log Scale) ===\n")
