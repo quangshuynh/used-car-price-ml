@@ -21,7 +21,7 @@ This project predicts used car selling prices from vehicle listing data using su
 |   `-- raw/
 |       `-- Used Car Price Prediction Dataset export 2026-03-20 19-46-48.csv
 |-- resources/
-|   `-- 1.txt
+|   `-- CSCI-335 Machine Learning Presentation (Group 3).pdf
 |-- README.md
 `-- requirements.txt
 ```
