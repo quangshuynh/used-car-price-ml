@@ -8,7 +8,6 @@ on the used car dataset
 Author: Kai Fan kf5601
 Updated by Quang Huynh (qth9368) 
 """
-# TODO: A lot of stuff needs to be moved to evaluate.py, use this version for check in for now
 
 # Import necessary libraries
 import os
@@ -30,14 +29,6 @@ from evaluate import (
     build_results_dataframe,
     format_results_dataframe,
 )
-
-# # TODO: Move to evaluate.py later, use this version for check in for now
-# def evaluate_model(y_true, y_pred):
-#     mse = mean_squared_error(y_true, y_pred)
-#     rmse = np.sqrt(mse)
-#     mae = mean_absolute_error(y_true, y_pred)
-#     r2 = r2_score(y_true, y_pred)
-#     return mse, rmse, mae, r2
 
 def linear_regression(X_train, y_train, X_val, y_val, log_transformed: bool = True):
     """
