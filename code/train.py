@@ -19,6 +19,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import AdaBoostRegressor
 from sklearn.svm import SVR
 from sklearn.neural_network import MLPRegressor
 
@@ -153,6 +154,36 @@ def random_forest_regressor(X_train, y_train, X_val, y_val, log_transformed: boo
             })
 
     return results
+
+
+def adaboost_regressor(X_train, y_train, X_val, y_val, log_transformed: bool = True):
+    results = []
+    decision_tree_est = DecisionTreeRegressor(max_depth=3)
+    linear_reg_est = LinearRegression()
+    model = AdaBoostRegressor(
+        estimator=decision_tree_est,
+        n_estimators=25,
+        learning_rate=.005,
+        loss="square",
+        random_state=35,
+    )
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_val)
+    mse, rmse, mae, r2 = evaluate_model(
+        y_val, y_pred, log_transformed=log_transformed
+    )
+
+    results.append({
+        "Model": "Adaptive Boosting Regressor",
+        "Configuration": f"estimator = Decision Tree, n_estimators = {25}, learning rate = .005",
+        "MSE": mse,
+        "RMSE": rmse,
+        "MAE": mae,
+        "R2": r2
+    })
+
+    return results
+
 
 def svr_regressor(X_train, y_train, X_val, y_val, log_transformed: bool = True):
     """
@@ -374,6 +405,25 @@ def main():
         y_val,
         all_results
     )
+    for n in [25, 50, 125]:
+        for lr in [.0005, .05, .5]:
+            train_and_store_result(
+                    AdaBoostRegressor(
+                        estimator=DecisionTreeRegressor(max_depth=5),
+                        n_estimators=n,
+                        learning_rate=lr,
+                        loss="linear",
+                        random_state=35,
+                    ),
+                    "AdaBoost Regressor",
+                    f"estimator = Decision Tree, n = {n}, lr = {lr}",
+                    X_train_processed,
+                    y_train,
+                    X_val_processed,
+                    y_val,
+                    all_results
+    )
+    
 
     # Create results table AFTER all models are added
     results_df = build_results_dataframe(all_results)
