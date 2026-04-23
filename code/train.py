@@ -20,6 +20,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import AdaBoostRegressor
+from sklearn.ensemble import StackingRegressor
 from sklearn.svm import SVR
 from sklearn.neural_network import MLPRegressor
 
@@ -405,6 +406,8 @@ def main():
         y_val,
         all_results
     )
+
+    # 7 AdaBoost REgressor
     for n in [25, 50, 125]:
         for lr in [.0005, .05, .5]:
             train_and_store_result(
@@ -422,6 +425,36 @@ def main():
                     X_val_processed,
                     y_val,
                     all_results
+    )
+            
+    # 8 Stacking Regressor
+    train_and_store_result(
+        StackingRegressor(
+            estimators=[
+                ("SVM", SVR(kernel="linear", C=1)), 
+                ("MLP", MLPRegressor(
+                                    hidden_layer_sizes=(32, 16),
+                                    activation="relu",
+                                    max_iter=1000,
+                                    random_state=35
+                )), 
+                ("Random Forest", RandomForestRegressor(
+                                    n_estimators=50,
+                                    max_depth=None,
+                                    random_state=35,
+                                    n_jobs=-1
+                ))],
+            final_estimator=LinearRegression(),
+            cv=None,
+            n_jobs=-1
+        ),
+        "Stacking",
+        "Stack of Best MLP, SVR, DT",
+        X_train_processed,
+        y_train,
+        X_val_processed,
+        y_val,
+        all_results
     )
     
 
